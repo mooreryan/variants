@@ -64,24 +64,27 @@ File.open(opts[:posn]).each_line do |line|
   end
 end
 
-FastaFile.open(opts[:fasta]).each_record do |head, seq|
-  if posns.has_key? head
-    snp_posns = posns[head]
+outf =
+  File.join(opts[:outdir],
+            "#{fasta[:base]}.variants.fna")
 
-    # these are 0-based posns
-    snp_posns.each do |var, snps|
-      old_base = new_base = ""
+File.open(outf, "w") do |f|
+  FastaFile.open(opts[:fasta]).each_record do |head, seq|
+    if posns.has_key? head
+      snp_posns = posns[head]
 
-      new_seq = seq
-      outf =
-        File.join(opts[:outdir],
-                  "#{fasta[:base]}.var_#{var}.fna")
+      f.printf ">%s original\n%s\n", head, seq
 
-      snps.each do |posn|
-        new_seq, old_base, new_base = add_snp new_seq, posn
-      end
+      # these are 0-based posns
+      snp_posns.each do |var, snps|
+        old_base = new_base = ""
 
-      File.open(outf, "w") do |f|
+        new_seq = seq
+
+        snps.each do |posn|
+          new_seq, old_base, new_base = add_snp new_seq, posn
+        end
+
         f.printf ">%s %s\n%s\n", head, var, new_seq
       end
     end
